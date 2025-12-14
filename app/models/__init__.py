@@ -1,4 +1,4 @@
-from models.user import User
+from .user import User
 
 # add here all models
 # __all__ = ["User", "Game"]

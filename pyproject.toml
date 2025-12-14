@@ -1,0 +1,21 @@
+[project]
+name = "transcendence-backend"
+version = "0.1.0"
+description = "transcendence-backend"
+authors = [
+    {name = "arabeman",email = "ambinintsoamikaia@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi[standard] (>=0.124.4,<0.125.0)",
+    "sqlmodel (>=0.0.27,<0.0.28)",
+    "environs (>=14.5.0,<15.0.0)",
+]
+
+[tool.poe.tasks]
+dev = "fastapi dev app/main.py"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
