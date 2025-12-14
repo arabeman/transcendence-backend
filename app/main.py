@@ -1,13 +1,10 @@
-from fastapi import FastAPI
-from sqlmodel import SQLModel, create_engine, Session, select
 from contextlib import asynccontextmanager
-from .models import User
-from .env import DATABASE_URL, DEBUG
 
-engine = create_engine(DATABASE_URL, echo=DEBUG)
+from fastapi import FastAPI
 
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
+from app.core.database import create_db_and_tables
+from app.routes.auth import router as auth_route
+from app.routes.user import router as user_route
 
 
 @asynccontextmanager
@@ -17,14 +14,13 @@ async def lifespan(app: FastAPI):
     yield
     print("Exiting...")
 
+
 app = FastAPI(lifespan=lifespan)
+
+app.include_router(user_route)
+app.include_router(auth_route)
+
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-@app.get("/users/")
-async def get_users():
-    with Session(engine) as session:
-        users = session.exec(select(User)).all()
-        return users
