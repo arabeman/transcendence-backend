@@ -4,3 +4,6 @@ env.read_env()
 
 DATABASE_URL = env.str("DATABASE_URL")
 DEBUG = env.bool("DEBUG")
+SECRET_KEY = env.str("SECRET_KEY")
+ALGORITHM = env.str("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = env.int("ACCESS_TOKEN_EXPIRE_MINUTES")

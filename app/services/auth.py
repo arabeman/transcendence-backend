@@ -1,9 +1,17 @@
+from datetime import datetime, timedelta, timezone
+
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jose import JWTError, jwt
 from sqlmodel import Session, select
 
-from ..core.security import hash_password
+from ..core.database import get_session
+from ..core.env import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
+from ..core.security import hash_password, verify_password
 from ..models.user import User
-from ..schemas.user import UserCreate
+from ..schemas.auth import UserCreate
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 class AuthService:
     @staticmethod
@@ -20,7 +28,8 @@ class AuthService:
         ).first()
         if existing_mail:
             raise ValueError("Email already in use")
-        
+
+        # TODO: fullname handling
         new_user = User(
             email=user_data.email,
             username=user_data.username,
@@ -31,3 +40,40 @@ class AuthService:
         session.commit()
         session.refresh(new_user)
         return new_user
+
+    @staticmethod
+    def authenticate_user(username: str, password: str, session: Session):
+        user = session.exec(select(User).where(User.username == username)).first()
+        if not user:
+            return None
+        if not verify_password(password, user.hashed_password):
+            return None
+        return user
+
+    @staticmethod
+    def create_access_token(user: User):
+        encode = {"sub": user.username, "id": user.id}
+        expires = datetime.now(timezone.utc) + timedelta(
+            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+        encode.update({"exp": expires})
+        token = jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+        return token
+
+    @staticmethod
+    async def get_current_user(
+        token: str = Depends(oauth2_scheme),
+        session: Session = Depends(get_session),
+    ):
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            username: str = payload.get("sub")
+            id: int = payload.get("id")
+            user = session.exec(
+                select(User).where(User.id == id, User.username == username)
+            ).first()
+            if None in [username, id, user]:
+                raise ValueError("Could not validate credentials")
+            return user
+        except JWTError:
+            raise ValueError("Could not validate credentials")
