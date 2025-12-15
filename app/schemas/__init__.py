@@ -1,3 +1,6 @@
-from .user import UserCreate
+"""
+This package initialization file allows Python to treat this directory as a package.
 
-__all__ = ["UserCreate"]
+You can optionally expose selected classes, functions, or variables here
+to simplify imports across the project.
+"""

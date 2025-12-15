@@ -1,3 +1,6 @@
-from .user import router as user_route
+"""
+This package initialization file allows Python to treat this directory as a package.
 
-__all__ = ["user_route"]
+You can optionally expose selected classes, functions, or variables here
+to simplify imports across the project.
+"""

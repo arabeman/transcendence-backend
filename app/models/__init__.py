@@ -1,5 +1,6 @@
-from .user import User
+"""
+This package initialization file allows Python to treat this directory as a package.
 
-# add here all models
-# __all__ = ["User", "Game"]
-__all__ = ["User"]
+You can optionally expose selected classes, functions, or variables here
+to simplify imports across the project.
+"""

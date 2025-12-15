@@ -1,7 +1,7 @@
 from sqlmodel import Session, select
 
-from ..models import User
-from ..schemas import UserCreate
+from ..models.user import User
+from ..schemas.user import UserCreate
 
 
 class AuthService:
