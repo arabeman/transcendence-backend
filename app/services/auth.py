@@ -1,5 +1,6 @@
 from sqlmodel import Session, select
 
+from ..core.security import hash_password
 from ..models.user import User
 from ..schemas.user import UserCreate
 
@@ -18,12 +19,12 @@ class AuthService:
             select(User).where(User.email == user_data.email)
         ).first()
         if existing_mail:
-            raise ValueError("Email already exists")
-
+            raise ValueError("Email already in use")
+        
         new_user = User(
             email=user_data.email,
             username=user_data.username,
-            hashed_password=user_data.password,  #! to be hashed properly
+            hashed_password=hash_password(user_data.password),
         )
 
         session.add(new_user)
