@@ -6,10 +6,44 @@ Backend API built with FastAPI and SQLModel.
 
 Before setting up the project, you'll need to install:
 
-- **Poetry** - Dependency management tool
-  - Install: https://python-poetry.org/docs/#installation
-- **Poe the Poet** - Task runner
-  - Install: https://poethepoet.natn.io/installation.html
+### Poetry - Dependency Management Tool
+
+Poetry is a tool for dependency management and packaging in Python.
+
+**Installation:**
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+```
+
+**Verify installation:**
+```bash
+poetry --version
+```
+
+**Optional - Enable bash completions:**
+```bash
+poetry completions bash >> ~/.bash_completion
+```
+
+For other shells or installation methods, visit: https://python-poetry.org/docs/#installation
+
+---
+
+### Poe the Poet - Task Runner
+
+Poe the Poet is a task runner that works well with Poetry projects.
+
+**Installation:**
+
+Add poethepoet as a dev dependency to your project:
+```bash
+poetry add --group dev poethepoet
+```
+
+**Verify installation:**
+```bash
+poetry run poe
+```
 
 ## Setup
 
