@@ -19,15 +19,17 @@ def register_user(user_data: UserCreate, session: Session = Depends(get_session)
         return UserRead.model_validate(user)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
+    
 
 
-@router.post("/token", response_model=Token)
-def login_for_access_token(
+
+@router.post("/login", response_model=Token)
+def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: Session = Depends(get_session),
 ):
     user = AuthService.authenticate_user(form_data.username, form_data.password, session)
     if not user:
-        raise HTTPException(status_code=401, detail="Incorrect username or password")
+        raise HTTPException(status_code=401, detail="Wrong credentials")
     token = AuthService.create_access_token(user)
     return {"access_token": token, "token_type": "bearer"}

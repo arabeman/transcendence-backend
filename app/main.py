@@ -33,3 +33,8 @@ async def user(user: user_dependency, db: db_dependency):
     if user is None:
         raise HTTPException(status_code=401, detail="Authentication Failed")
     return {"User": user}
+
+# @app.get("/me", status_code=200)
+# async def read_current_user(user: User = Depends(AuthService.get_current_user)):
+#     return user
+

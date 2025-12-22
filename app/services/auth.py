@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from sqlmodel import Session, select
@@ -12,6 +12,7 @@ from ..models.user import User
 from ..schemas.auth import UserCreate
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+
 
 class AuthService:
     @staticmethod
@@ -69,11 +70,8 @@ class AuthService:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             username: str = payload.get("sub")
             id: int = payload.get("id")
-            user = session.exec(
-                select(User).where(User.id == id, User.username == username)
-            ).first()
-            if None in [username, id, user]:
-                raise ValueError("Could not validate credentials")
-            return user
+            if None in [username, id]:
+                raise HTTPException(status_code=401, detail="Wrong credentials")
+            return {"username": username, "id": id}
         except JWTError:
-            raise ValueError("Could not validate credentials")
+            raise HTTPException(status_code=401, detail="Wrong credentials")
