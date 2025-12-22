@@ -1,17 +1,23 @@
 from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlmodel import Session, select
 
+from app.schemas.user import UserRead
 from ..core.database import get_session
-from ..core.env import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
+from ..core.env import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    ALGORITHM,
+    SECRET_KEY,
+    REFRESH_TOKEN_EXPIRE_DAYS,
+)
 from ..core.security import hash_password, verify_password
 from ..models.user import User
 from ..schemas.auth import UserCreate
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
 class AuthService:
@@ -62,16 +68,35 @@ class AuthService:
         return token
 
     @staticmethod
-    async def get_current_user(
-        token: str = Depends(oauth2_scheme),
-        session: Session = Depends(get_session),
-    ):
+    def create_refresh_token(user: User):
+        encode = {"sub": user.username, "id": user.id}
+        expires = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        encode.update({"exp": expires})
+        token = jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+        return token
+
+    @staticmethod
+    def get_user_from_token(token: str, session: Session):
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             username: str = payload.get("sub")
             id: int = payload.get("id")
             if None in [username, id]:
+                return None
+            user = session.exec(select(User).where(User.id == id)).first()
+            return user
+        except JWTError:
+            return None
+
+    @staticmethod
+    async def get_current_user(
+        token: str = Depends(oauth2_scheme),
+        session: Session = Depends(get_session),
+    ):
+        try:
+            user = AuthService.get_user_from_token(token, session)
+            if user is None:
                 raise HTTPException(status_code=401, detail="Wrong credentials")
-            return {"username": username, "id": id}
+            return UserRead.model_validate(user)
         except JWTError:
             raise HTTPException(status_code=401, detail="Wrong credentials")
