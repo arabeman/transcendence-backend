@@ -1,0 +1,98 @@
+services:                       # List of containers/ services we want to run
+  
+  #-------------------------------
+  # FastAPI
+  #-------------------------------
+
+  api:                          # Name of the container / service
+    build: .                    # Link to DOCKERFILE "."
+    image: fastapi
+    container_name: fastgres_fastapi
+    ports:
+      - "8000:8000"             # "Host_Port:Container_Port". Maps port 8000 on the machine to port 8000 inside the container.
+    volumes:
+      - .:/app                  # "Host_Folder:Container_Folder"
+                                # Any change you make to files on the machine (.) is instantly reflected inside the container's /app folder.
+                                # => allows "hot reload" to work without rebuilding.
+    # List style with =
+    environment:
+      - PYTHONUNBUFFERED=1      # A setting that tells Python: "Don't hold back logs, print them to the terminal immediately."
+      # Pass config to Python, but not the passwd directly
+      - POSTGRES_HOST=db        # Connect api to database
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      # Tell Python where to find the password file
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+    secrets:
+      - postgres_password       # <--- Grants acess to the secret file
+    networks:
+      - fastgres_net
+    depends_on:
+      - db                       # <--- Waits for db to start
+
+  #-------------------------------
+  # Database Service (Postgres)
+  #-------------------------------
+
+  db:
+    image: postgres:16
+    container_name: fastgres_db
+    restart: always
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    # Dictionarty style
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    secrets:
+      - postgres_password
+    networks:
+      - fastgres_net
+
+  #-------------------------------
+  # GUI Service (pgAdmin)
+  #-------------------------------
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: fastgres_pgadmin
+    restart: always
+    ports:
+      - "${PGADMIN_PORT}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD_FILE: /run/secrets/pgadmin_password
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    secrets:
+      - pgadmin_password
+    networks:
+      - fastgres_net
+    depends_on:
+      - db
+
+#-------------------------------
+# Secrets Definition
+#-------------------------------
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password
+  pgadmin_password:
+    file: ./secrets/pgadmin_password
+
+#-------------------------------
+# Volumes & Networks
+#-------------------------------
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+
+networks:
+  fastgres_net:
+    driver: bridge
