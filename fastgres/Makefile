@@ -6,7 +6,7 @@
 #    By: mrabenja <mrabenja@student.42antananari    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/12/27 16:02:14 by mrabenja          #+#    #+#              #
-#    Updated: 2026/01/02 19:25:42 by mrabenja         ###   ########.fr        #
+#    Updated: 2026/01/05 09:26:37 by mrabenja         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -148,6 +148,7 @@ export _WIPE
 
 # Default compose file
 COMPOSE_FILE = ./docker-compose.yml
+DOCKER_COMPOSE = docker compose
 
 
 all:
@@ -159,7 +160,7 @@ all:
 	@chmod +x ./scripts/setup_secrets.sh
 	@./scripts/setup_secrets.sh
 	@# ---------------------
-	docker compose -f $(COMPOSE_FILE) up -d --build
+	DOCKER_BUILDKIT=0 $(DOCKER_COMPOSE) -f $(COMPOSE_FILE) up -d --build
 	@echo "$(BGreen)"
 	@echo "$$_BUILT_START"
 	@echo "$(Color_Off)"
@@ -171,7 +172,7 @@ up:
 	@chmod +x ./scripts/setup_secrets.sh
 	@./scripts/setup_secrets.sh
 	@# ---------------------
-	docker compose -f $(COMPOSE_FILE) up -d
+	DOCKER_BUILDKIT=0 $(DOCKER_COMPOSE) -f $(COMPOSE_FILE) up -d
 	@echo "$(BCyan)"
 	@echo "$$_UP"
 	@echo "$(Color_Off)"
@@ -182,21 +183,21 @@ rebuild:
 	@chmod +x ./scripts/setup_secrets.sh
 	@./scripts/setup_secrets.sh
 	@# ---------------------
-	docker compose -f $(COMPOSE_FILE) up -d --build
+	DOCKER_BUILDKIT=0 $(DOCKER_COMPOSE) -f $(COMPOSE_FILE) up -d --build
 	@echo "$(BBlue)"
 	@echo "$$_REBUILT"
 	@echo "$(Color_Off)"
 	
 down:
 	@clear
-	docker compose -f $(COMPOSE_FILE) down
+	DOCKER_BUILDKIT=0 $(DOCKER_COMPOSE) -f $(COMPOSE_FILE) down
 	@echo "$(BYellow)"
 	@echo "$$_DOWN"
 	@echo "$(Color_Off)"
 
 wipe:
 	@clear
-	docker compose -f $(COMPOSE_FILE) down --volumes --rmi all --remove-orphans
+	DOCKER_BUILDKIT=0 $(DOCKER_COMPOSE) -f $(COMPOSE_FILE) down --volumes --rmi all --remove-orphans
 	@rm -rf .env
 	@clear
 	@echo "$(BPurple)"

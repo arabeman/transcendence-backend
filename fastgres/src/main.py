@@ -1,4 +1,5 @@
 from database import create_db_and_tables
+from fastapi import FastAPI
 from crud import (
 	create_hero, list_heroes, mutable_list_heroes,
 	get_hero, update_hero, delete_hero,
@@ -8,6 +9,16 @@ from crud import (
 	create_game_session, recent_games, create_or_update_stats,
 	get_leaderboard,
 )
+
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+	return {"Hello": "World"}
+
+@app.on_event("startup")
+def on_startup():
+	create_db_and_tables()
 
 def demo():
 	print("Init DB...")
