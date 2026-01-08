@@ -1,11 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, Cookie
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 
-
 from ..core.database import get_session
+from ..core.env import REFRESH_TOKEN_EXPIRE_DAYS, DEBUG
 from ..schemas.auth import Token, UserCreate
 from ..schemas.user import UserRead
 from ..services.auth import AuthService
@@ -24,6 +24,7 @@ def register_user(user_data: UserCreate, session: Session = Depends(get_session)
 
 @router.post("/login", response_model=Token)
 def login(
+    response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: Session = Depends(get_session),
 ):
@@ -34,16 +35,26 @@ def login(
         raise HTTPException(status_code=401, detail="Wrong credentials")
     token = AuthService.create_access_token(user)
     refresh_token = AuthService.create_refresh_token(user)
+
+    response.set_cookie(
+        key="refreshToken",
+        value=refresh_token,
+        httponly=True,
+        secure=not DEBUG,
+        samesite="strict",
+        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,  # en seconde ito
+    )
+
     return {
         "access_token": token,
-        "refresh_token": refresh_token,
         "token_type": "bearer",
     }
 
 
 @router.post("/refresh", response_model=Token)
 def refresh_token(
-    refresh_token: str,
+    response: Response,
+    refresh_token: Annotated[str | None, Cookie(alias="refreshToken")] = None,
     session: Session = Depends(get_session),
 ):
     user = AuthService.get_user_from_token(refresh_token, session)
@@ -51,8 +62,28 @@ def refresh_token(
         raise HTTPException(status_code=401, detail="Invalid refresh token")
     new_access_token = AuthService.create_access_token(user)
     new_refresh_token = AuthService.create_refresh_token(user)
+
+    response.set_cookie(
+        key="refreshToken",
+        value=new_refresh_token,
+        httponly=True,
+        secure=not DEBUG,
+        samesite="strict",
+        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    )
+
     return {
         "access_token": new_access_token,
-        "refresh_token": new_refresh_token,
         "token_type": "bearer",
     }
+
+
+@router.post("/logout")
+def logout(response: Response):
+    response.delete_cookie(
+        key="refreshToken",
+        httponly=True,
+        secure=not DEBUG,
+        samesite="strict",
+    )
+    return {"message": "Successfully logged out"}

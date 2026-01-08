@@ -2,6 +2,7 @@ from environs import env
 
 env.read_env()
 
+FRONTEND_URL = env.str("FRONTEND_URL")
 DATABASE_URL = env.str("DATABASE_URL")
 DEBUG = env.bool("DEBUG")
 SECRET_KEY = env.str("SECRET_KEY")

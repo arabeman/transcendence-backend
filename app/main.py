@@ -2,10 +2,12 @@ from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session
 
 from app.core.database import create_db_and_tables, get_session
+from app.core.env import FRONTEND_URL
 from app.models.user import User
 from app.routes.auth import router as auth_route
 from app.routes.user import router as user_route
@@ -20,6 +22,14 @@ async def lifespan(app: FastAPI):
     print("Exiting...")
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[FRONTEND_URL],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(user_route)
 app.include_router(auth_route)
@@ -37,4 +47,3 @@ async def user(user: user_dependency, db: db_dependency):
 # @app.get("/me", status_code=200)
 # async def read_current_user(user: User = Depends(AuthService.get_current_user)):
 #     return user
-
